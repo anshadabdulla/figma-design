@@ -9,20 +9,6 @@
 
   /* ================= ICONS ================= */
   const I = {
-    heart:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 20.3s-7.5-4.6-9.2-9.3C1.6 7.6 3.8 4.2 7.2 4.2c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.4 0 5.6 3.4 4.4 6.8-1.7 4.7-9.2 9.3-9.2 9.3z" stroke-linejoin="round"/></svg>',
-    messenger:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 2.8c-5.3 0-9.2 3.8-9.2 8.8 0 2.7 1.1 5 3 6.6v3.1l2.9-1.6c1 .3 2.1.5 3.3.5 5.3 0 9.2-3.8 9.2-8.6S17.3 2.8 12 2.8z" stroke-linejoin="round"/><path d="M7 14l3.5-3.6 2.4 2 3.9-3.6-3.4 5.4-2.5-2L7 14z" fill="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>',
-    dots:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>',
-    comment:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20.7 16.4A9 9 0 1 0 17 20l4 1-0.3-4.6z" stroke-linejoin="round"/></svg>',
-    send:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M21.5 3 3 10l7.3 2.7L13 20z"/><path d="m10.3 12.7 5.2-5.2"/></svg>',
-    bookmark:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M19 21l-7-5.5L5 21V3h14z"/></svg>',
-    home:'<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.7 2.5 10.2V21h6.8v-6.3h5.4V21h6.8V10.2z"/></svg>',
-    search:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5.5 5.5" stroke-linecap="round"/></svg>',
-    plus:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M12 7.5v9M7.5 12h9" stroke-linecap="round"/></svg>',
-    reels:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M3 8.5h18M9 3l3 5.5M14.5 3l3 5.5"/><path d="M10 12.3v5l4.3-2.5z" fill="currentColor" stroke-linejoin="round"/></svg>',
-    user:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="10" r="3.3"/><path d="M5.8 18.7c1.5-2.2 3.6-3.3 6.2-3.3s4.7 1.1 6.2 3.3"/></svg>',
-    wa:'<svg viewBox="0 0 24 24"><path fill="#fff" d="M12 3.2a8.8 8.8 0 0 0-7.6 13.2L3.2 20.8l4.5-1.2A8.8 8.8 0 1 0 12 3.2zm0 16a7.2 7.2 0 0 1-3.7-1l-.3-.2-2.6.7.7-2.6-.2-.3A7.2 7.2 0 1 1 12 19.2z"/><path fill="#fff" d="M9.2 7.6c-.2-.4-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.3.3-.9.9-.9 2.2s.9 2.6 1.1 2.7c.1.2 1.8 2.9 4.5 3.9 2.2.9 2.7.7 3.2.7.5-.1 1.6-.7 1.8-1.3.2-.6.2-1.2.2-1.3l-.4-.3-1.8-.9c-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.3-.1-1.1-.4-2.1-1.3-.8-.7-1.3-1.5-1.4-1.8-.2-.3 0-.4.1-.5l.4-.5.3-.4v-.5l-.8-1.8z"/></svg>',
-    bolt:'<svg viewBox="0 0 24 24" fill="#FFC53D"><path d="M13.5 2 4 13.5h6.5L9.5 22 20 9.5h-6.6z"/></svg>',
-    cash:'<svg viewBox="0 0 24 24" fill="none" stroke="#9BE3B5" stroke-width="1.8"><rect x="2.5" y="6" width="19" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5v5M18 9.5v5" stroke-linecap="round"/></svg>',
     back:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4.5M10.5 5.5 4 12l6.5 6.5"/></svg>',
     video:'<svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="2.5" y="6" width="13.5" height="12" rx="2.5"/><path d="m16 10.2 5.5-3.2v10l-5.5-3.2z"/></svg>',
     phone:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5.3 3.2h3.3l1.6 4.4-2.2 1.5a11.5 11.5 0 0 0 6.9 6.9l1.5-2.2 4.4 1.6v3.3c0 1-.8 1.8-1.8 1.8C10.6 20.5 3.5 13.4 3.5 5c0-1 .8-1.8 1.8-1.8z"/></svg>',
@@ -702,34 +688,25 @@
     const r = sheetSel; closeSheet(); userSay(r.title); r.run();
   });
 
-  /* ================= SCREENS ================= */
-  async function openChat() {
-    if (screen.classList.contains('in-chat')) return;
-    ac(); sfx.tap();
-    screen.classList.add('in-chat'); waView.setAttribute('aria-hidden', 'false'); $('#igView').setAttribute('aria-hidden', 'true');
+  /* ================= START ================= */
+  // The demo opens straight in the WhatsApp chat; the customer's "Hi" is typed and sent for them.
+  async function start() {
+    token++; busy = false; S = freshState(); lastSide = null;
+    closeSheet(); $('#pay').classList.remove('show');
+    thread.innerHTML = `<div class="chip">Today</div>
+      <div class="notice">🔒 This business uses a secure service from Meta to manage this chat. Tap to learn more.</div>`;
+    waStatus.textContent = 'Typically replies instantly'; waStatus.classList.remove('typing');
+    input.value = ''; syncSend();
     const t = token;
-    await wait(700); if (t !== token) return;
-    // Click-to-WhatsApp ads pre-fill the first message
+    await wait(600); if (t !== token) return;
     input.value = 'Hi'; syncSend();
     await wait(650); if (t !== token) return;
     input.value = ''; syncSend();
     userSay('Hi');
     welcome();
   }
-  document.querySelectorAll('[data-open-chat]').forEach(b => b.addEventListener('click', openChat));
-  $('#waBack').addEventListener('click', start);
-
-  function start() {
-    token++; busy = false; S = freshState(); lastSide = null;
-    closeSheet(); $('#pay').classList.remove('show');
-    screen.classList.remove('in-chat'); waView.setAttribute('aria-hidden', 'true'); $('#igView').setAttribute('aria-hidden', 'false');
-    $('.ig-scroll').scrollTop = 0;
-    thread.innerHTML = `<div class="chip">Today</div>
-      <div class="notice">🔒 This business uses a secure service from Meta to manage this chat. Tap to learn more.</div>`;
-    waStatus.textContent = 'Typically replies instantly'; waStatus.classList.remove('typing');
-    input.value = ''; syncSend();
-  }
-  $('#restartBtn').addEventListener('click', start);
+  $('#restartBtn').addEventListener('click', () => { ac(); start(); });
+  $('#waBack').addEventListener('click', () => { ac(); start(); });
 
   const yr = document.getElementById('year'); if (yr) yr.textContent = Math.max(2026, new Date().getFullYear());
   console.info('%cRestaurant AI Ordering Agent — built by Ads n\x27 Codes · adsncodes.com', 'font:600 13px sans-serif;color:#1DAA61');

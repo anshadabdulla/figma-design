@@ -19,9 +19,6 @@
   --wa-btn:#1DAA61;
   --wa-tick:#53BDEB;
 
-  --ig-ink:#0A0A0A;
-  --brand-dark:#17100C;
-  --brand-orange:#F07B1F;
 
   --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 }
@@ -61,71 +58,15 @@ img{display:block;}
 .sb-icons{display:inline-flex;gap:6px;align-items:center;}
 .sb-icons svg{display:block;}
 
-.view{position:absolute;inset:54px 0 0 0;display:flex;flex-direction:column;background:#fff;transition:transform .42s cubic-bezier(.2,.8,.2,1),opacity .3s;}
-.view.wa{transform:translateX(100%);}
-.screen.in-chat .view.wa{transform:none;}
-.screen.in-chat .view.ig{transform:translateX(-28%);opacity:.6;}
+.view{position:absolute;inset:54px 0 0 0;display:flex;flex-direction:column;background:#fff;}
 
 .ic{display:inline-flex;align-items:center;justify-content:center;flex:none;}
 .ic svg{display:block;}
 
-/* ---------- Instagram ---------- */
-.ig-top{display:flex;align-items:center;justify-content:space-between;padding:4px 16px 8px;}
-.ig-logo{font-family:"Grand Hotel",cursive;font-size:31px;line-height:1;color:var(--ig-ink);transform:translateY(2px);}
-.ig-top-icons{display:flex;gap:20px;}
-.msgr{position:relative;}
-.badge{position:absolute;top:-6px;right:-7px;min-width:17px;height:17px;border-radius:9px;background:#FF3040;color:#fff;font-style:normal;font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff;}
-.ig-scroll{flex:1;overflow-y:auto;scrollbar-width:none;}
-.ig-scroll::-webkit-scrollbar{display:none;}
-.post-head{display:flex;align-items:center;gap:10px;padding:8px 12px 10px;border-top:1px solid #efefef;}
-.post-avatar{width:34px;height:34px;flex:none;border-radius:50%;background:#9E0000;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px #fff,0 0 0 3.5px #E0E0E0;}
+/* avatar (checkout sheet) */
+.post-avatar{width:34px;height:34px;flex:none;border-radius:50%;background:#9E0000;display:flex;align-items:center;justify-content:center;}
 .post-avatar img,.wa-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover;}
-.post-avatar span{font-family:"Titan One",var(--ui);color:#F3E9DC;font-size:7.2px;line-height:.95;text-align:center;letter-spacing:.02em;}
-.post-avatar.sm{width:30px;height:30px;box-shadow:none;}
-.post-who{flex:1;min-width:0;}
-.post-name{margin:0;font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:4px;}
-.ig-verified{display:inline-block;width:13px;height:13px;border-radius:50%;background:#0095F6 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/9px no-repeat;}
-.post-sub{margin:0;font-size:11.5px;color:#262626;}
-
-.creative{position:relative;height:400px;overflow:hidden;background:radial-gradient(120% 80% at 85% 10%,#3B2415 0%,#1E140E 45%,#120C09 100%);color:#fff;}
-.cr-glow{position:absolute;right:-60px;top:-50px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(240,123,31,.35),transparent 65%);}
-.cr-brand{position:absolute;left:18px;top:16px;display:flex;align-items:center;gap:8px;}
-.cr-logo{font-family:"Titan One",var(--ui);font-size:17px;line-height:.9;color:#F3E9DC;letter-spacing:.01em;}
-.cr-tag{font-family:"Outfit",var(--ui);font-weight:600;font-size:7.5px;line-height:1.15;color:var(--brand-orange);letter-spacing:.08em;border-left:1px solid rgba(255,255,255,.2);padding-left:8px;}
-.cr-head{position:absolute;left:18px;top:62px;margin:0;font-family:"Outfit",var(--ui);font-weight:700;font-size:25px;line-height:1.12;letter-spacing:-.01em;}
-.cr-head em{font-style:normal;color:#25D366;}
-.cr-feats{position:absolute;left:14px;top:156px;display:flex;gap:6px;}
-.feat{width:62px;display:flex;flex-direction:column;align-items:center;gap:5px;font-family:"Outfit",var(--ui);font-size:9px;line-height:1.15;text-align:center;color:#EDE3D6;}
-.feat-ic{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);}
-.feat-ic.wa{background:rgba(37,211,102,.16);border-color:rgba(37,211,102,.4);}
-.feat-ic svg{width:17px;height:17px;}
-.cr-trust{position:absolute;z-index:2;left:18px;top:216px;display:flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);font-family:"Outfit",var(--ui);font-size:9px;line-height:1.2;color:#EDE3D6;}
-.cr-trust b{color:#fff;font-weight:600;}
-.faces{display:flex;}
-.faces i{font-style:normal;width:21px;height:21px;border-radius:50%;background:#2E2018;border:1.5px solid #120C09;display:flex;align-items:center;justify-content:center;font-size:10px;margin-left:-6px;}
-.faces i:first-child{margin-left:0;}
-.cr-food{position:absolute;left:0;right:0;bottom:0;width:100%;height:156px;object-fit:cover;object-position:center 58%;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 30%);mask-image:linear-gradient(to bottom,transparent 0,#000 30%);}
-.cr-phone{position:absolute;right:18px;top:70px;width:86px;height:150px;border-radius:16px;background:linear-gradient(160deg,#0f1f18,#06100b);border:3px solid #2a2a2a;box-shadow:0 14px 30px rgba(0,0,0,.5);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-family:"Outfit",var(--ui);font-size:10px;text-align:center;line-height:1.2;transform:rotate(6deg);}
-.cr-phone-ic{width:40px;height:40px;border-radius:50%;background:#25D366;}
-.cr-phone-ic svg{width:24px;height:24px;}
-
-.cr-strip{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#2A1A11;color:#F3E9DC;}
-.cr-strip p{margin:0;flex:1;font-family:"Outfit",var(--ui);font-size:11.5px;line-height:1.35;}
-.cr-strip b{color:#fff;font-weight:600;}
-.cr-pill{display:flex;align-items:center;gap:8px;padding:7px 10px 7px 7px;border-radius:14px;background:#fff;border:0;color:#111;font-family:"Outfit",var(--ui);font-weight:600;font-size:11px;line-height:1.15;text-align:left;}
-.cr-pill-ic{width:26px;height:26px;border-radius:50%;background:#25D366;}
-.cr-pill-ic svg{width:16px;height:16px;}
-.chev{font-size:22px;line-height:1;margin-left:2px;}
-.ig-cta{position:relative;display:flex;align-items:center;justify-content:space-between;width:100%;padding:11px 14px;border:0;background:#1F8A4C;color:#fff;font-size:13.5px;font-weight:600;text-align:left;}
-.ig-cta:hover{background:#1C7E45;}
-.tap-hint{position:absolute;right:40px;top:50%;transform:translateY(-50%);font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.2);animation:pulse 1.8s ease-in-out infinite;}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.45);}60%{box-shadow:0 0 0 8px rgba(255,255,255,0);}}
-.post-actions{display:flex;gap:16px;padding:10px 14px 4px;}
-.post-actions .save{margin-left:auto;}
-.post-meta{padding:0 14px 16px;font-size:13px;line-height:1.4;}
-.post-meta p{margin:4px 0;}
-.post-meta .muted{color:#737373;}
-.ig-nav{display:flex;justify-content:space-around;align-items:center;height:50px;padding-bottom:26px;box-sizing:content-box;border-top:1px solid #efefef;background:#fff;}
+.post-avatar.sm{width:30px;height:30px;}
 
 /* ---------- WhatsApp ---------- */
 .wa{background:var(--wa-bg);}
@@ -133,7 +74,6 @@ img{display:block;}
 .wa-head .ic{width:32px;height:32px;color:#111B21;}
 .wa-head .back{border:0;background:none;padding:0;}
 .wa-avatar{width:40px;height:40px;border-radius:50%;background:#9E0000;display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 0 0 2px #fff,0 0 0 3.5px #1F6F5C;margin:0 4px 0 2px;}
-.wa-avatar span{font-family:"Titan One",var(--ui);color:#F3E9DC;font-size:8.6px;line-height:.95;text-align:center;}
 .wa-who{flex:1;min-width:0;}
 .wa-name{margin:0;font-size:15.5px;font-weight:600;display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .wa-verified{display:inline-flex;}
@@ -314,5 +254,4 @@ img{display:block;}
   .screen{width:100%;height:100%;border-radius:0;}
   .view{inset:0;}
   .composer,.sheet-foot{padding-bottom:max(10px,env(safe-area-inset-bottom));}
-  .ig-nav{padding-bottom:max(6px,env(safe-area-inset-bottom));}
 }
