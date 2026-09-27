@@ -186,35 +186,61 @@
   });
 
   /* ================= PHONE SCALING ================= */
-  // Must match the phone media query in styles.css
+  // Must match the media queries in styles.css
   const PHONE = matchMedia('(max-width:560px), (max-height:520px) and (pointer:coarse)');
+  const UPRIGHT = matchMedia('(max-width:560px)');          // framed iPhone mockup
+  const fullScreen = () => PHONE.matches && !UPRIGHT.matches; // phone held sideways
 
-  // On phones the app fills the *visible* viewport: this tracks browser toolbars
-  // showing/hiding and the on-screen keyboard (iOS Safari, Chrome, Samsung Internet…).
+  const typing = () => { const a = document.activeElement; return a === input || !!(a && a.isContentEditable); };
+  // Screen height without the keyboard, so the mockup doesn't shrink when it opens
+  let stableH = innerHeight, lastW = innerWidth;
+  function measure() {
+    if (innerWidth !== lastW || !typing() || innerHeight > stableH) { stableH = innerHeight; lastW = innerWidth; }
+  }
+
+  // Page height on phones. Sideways it tracks the visible area (browser bars, keyboard);
+  // upright it stays at the keyboard-free height and the mockup is shifted instead.
   function setAppHeight() {
     const vv = window.visualViewport;
-    const h = Math.round(vv ? vv.height : innerHeight);
-    document.documentElement.style.setProperty('--app-h', h + 'px');
-    if (PHONE.matches && (scrollX || scrollY)) scrollTo(0, 0);
-    if (document.activeElement === input) scrollDown();
+    const h = fullScreen() ? (vv ? vv.height : innerHeight) : stableH;
+    document.documentElement.style.setProperty('--app-h', Math.round(h) + 'px');
+    if (fullScreen() && (scrollX || scrollY)) scrollTo(0, 0);
   }
+
+  // Upright phones: while the keyboard is open, lift the mockup so the message box stays visible
+  function keepComposerVisible() {
+    const stage = $('.stage');
+    if (!UPRIGHT.matches || !typing()) { stage.style.transform = ''; return; }
+    stage.style.transition = 'none'; const prev = stage.style.transform; stage.style.transform = '';
+    const vv = window.visualViewport;
+    const visibleBottom = vv ? vv.offsetTop + vv.height : innerHeight;
+    const shift = $('#composer').getBoundingClientRect().bottom + 8 - visibleBottom;
+    stage.style.transform = prev; void stage.offsetHeight; stage.style.transition = '';
+    stage.style.transform = shift > 0 ? `translateY(${-Math.round(shift)}px)` : '';
+  }
+
+  function relayout() { measure(); setAppHeight(); fit(); keepComposerVisible(); if (typing()) scrollDown(); }
   if (window.visualViewport) {
-    visualViewport.addEventListener('resize', setAppHeight);
-    visualViewport.addEventListener('scroll', setAppHeight);
+    visualViewport.addEventListener('resize', relayout);
+    visualViewport.addEventListener('scroll', () => { setAppHeight(); keepComposerVisible(); });
   }
-  addEventListener('resize', setAppHeight);
-  addEventListener('orientationchange', () => setTimeout(() => { setAppHeight(); fit(); }, 250));
-  input.addEventListener('focus', () => setTimeout(scrollDown, 300));
+  addEventListener('resize', relayout);
+  addEventListener('orientationchange', () => setTimeout(relayout, 250));
+  const onFocusChange = () => { setTimeout(relayout, 60); setTimeout(relayout, 350); };
+  addEventListener('focusin', onFocusChange);
+  addEventListener('focusout', onFocusChange);
 
   function fit() {
     const wrap = $('#phoneWrap'), phone = $('#phone');
-    if (PHONE.matches) { wrap.style.cssText = ''; phone.style.transform = ''; return; }
-    const top = $('.stage').getBoundingClientRect().top;
-    const s = Math.min(1, Math.max(.5, (innerHeight - top - 20) / 876));
+    if (fullScreen()) { wrap.style.cssText = ''; phone.style.transform = ''; return; }
+    const top = $('.topbar').getBoundingClientRect().bottom;
+    const s = UPRIGHT.matches
+      ? Math.min(1, (innerWidth - 16) / 417, (stableH - top - 10) / 876)
+      : Math.min(1, Math.max(.5, (innerHeight - top - 32) / 876));
     wrap.style.width = 417 * s + 'px'; wrap.style.height = 876 * s + 'px';
     phone.style.transform = `scale(${s})`;
   }
-  addEventListener('resize', fit);
+
 
   /* ================= RENDER HELPERS ================= */
   let lastSide = null;
@@ -897,6 +923,6 @@
   $('.byline').addEventListener('click', e => { if (PHONE.matches) { e.preventDefault(); credits.classList.add('open'); } });
   $('#creditsClose').addEventListener('click', () => credits.classList.remove('open'));
 
-  setAppHeight(); start(); fit();
+  measure(); setAppHeight(); start(); fit();
   if (document.fonts) document.fonts.ready.then(fit);
 })();
