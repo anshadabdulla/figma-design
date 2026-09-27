@@ -66,8 +66,8 @@
     // mains
     {id:'chicken-biryani', name:'Chicken Biryani', desc:'Basmati rice, tender chicken, house spices', price:16, group:'mains', mod:'biryani', emoji:'🍚', alias:['chicken biryani','chicken biriyani','chicken briyani','biryani','biriyani','briyani']},
     {id:'mutton-biryani', name:'Mutton Biryani', desc:'Basmati rice, slow-cooked mutton, whole spices', price:23, group:'mains', mod:'biryani', emoji:'🍚', alias:['mutton biryani','mutton biriyani','mutton briyani','mutton']},
-    {id:'grilled-chicken', name:'Grilled Chicken (Half)', short:'Grilled Chicken', desc:'Smoky flame-grilled, garlic sauce', price:20, group:'mains', mod:'grill', emoji:'🔥', alias:['grilled chicken','grill chicken','grilled']},
-    {id:'charcoal-chicken', name:'Charcoal Grilled Chicken (Half)', short:'Charcoal Chicken', desc:'Charcoal-kissed, garlic sauce', price:23, group:'mains', mod:'grill', emoji:'🔥', alias:['charcoal grilled chicken','charcoal chicken','charcoal']},
+    {id:'grilled-chicken', name:'Grilled Chicken', short:'Grilled Chicken', desc:'Smoky flame-grilled, garlic sauce', price:20, group:'mains', mod:'grill', emoji:'🔥', alias:['grilled chicken','grill chicken','grilled']},
+    {id:'charcoal-chicken', name:'Charcoal Grilled Chicken', short:'Charcoal Chicken', desc:'Charcoal-kissed, garlic sauce', price:23, group:'mains', mod:'grill', emoji:'🔥', alias:['charcoal grilled chicken','charcoal chicken','charcoal']},
     {id:'chicken-shawarma', name:'Chicken Shawarma', desc:'Garlic sauce, pickles, fresh bread', price:8, group:'mains', mod:'shawarma', emoji:'🌯', alias:['chicken shawarma','shawarma','shawerma','shawarama']},
     {id:'chicken-burger', name:'Chicken Burger', desc:'Grilled patty, cheese, caramelized onions', price:10, group:'mains', mod:'burger', emoji:'🍔', alias:['chicken burger','burger']},
     {id:'club-sandwich', name:'Club Sandwich', desc:'Triple-stack, fries side', price:15, group:'mains', mod:'sandwich', emoji:'🥪', alias:['club sandwich','sandwich']},

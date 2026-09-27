@@ -13,8 +13,8 @@
 const MENU = [
   ['chicken-biryani', 'Chicken Biryani', 16, 'mains', 'Less spicy, Extra raita, Extra spicy'],
   ['mutton-biryani', 'Mutton Biryani', 23, 'mains', 'Less spicy, Extra raita, Extra spicy'],
-  ['grilled-chicken', 'Grilled Chicken (Half)', 20, 'mains', 'Less spicy, Extra garlic sauce, No fries'],
-  ['charcoal-chicken', 'Charcoal Grilled Chicken (Half)', 23, 'mains', 'Less spicy, Extra garlic sauce, No fries'],
+  ['grilled-chicken', 'Grilled Chicken', 20, 'mains', 'Less spicy, Extra garlic sauce, No fries'],
+  ['charcoal-chicken', 'Charcoal Grilled Chicken', 23, 'mains', 'Less spicy, Extra garlic sauce, No fries'],
   ['chicken-shawarma', 'Chicken Shawarma', 8, 'mains', 'Extra garlic, No pickles, Not spicy, Extra spicy'],
   ['chicken-burger', 'Chicken Burger', 10, 'mains', 'No cheese, Extra sauce, No onions'],
   ['club-sandwich', 'Club Sandwich', 15, 'mains', 'No mayo, Extra fries, Toasted well'],
