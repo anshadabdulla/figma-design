@@ -3,7 +3,7 @@
  * Built by Ads n' Codes · adsncodes.com · © 2026 Ads n' Codes. All rights reserved.
  *
  * POST /api/understand  { text, stage, cart:[{id,qty}], pending }
- * → { intent, items:[{id,qty}], quantity, notes:[{id,note}], address, phone, unavailable, reply }
+ * → { intent, items:[{id,qty|null}], quantity, notes:[{id,note}], address, phone, unavailable, reply }
  *
  * The Gemini key is read from the GEMINI_API_KEY environment variable (set in Vercel →
  * Settings → Environment Variables). It never reaches the browser.
@@ -51,7 +51,7 @@ Store facts: delivery by default, AED 5 fee, 25–40 minutes; pickup is free and
 Rules:
 - Customers type casually, misspell, use Arabic, Hindi, Malayalam, Urdu, Tagalog or mixed languages ("chiken biriyani", "2 briyani", "shawarama", "coke", "chai", "ek biryani", "واحد شاورما"). Map every dish to the closest menu id.
 - "biryani" alone = chicken-biryani; "tea"/"chai" alone = karak-tea; "coffee" = milk-coffee; "coke"/"cola" = coca-cola; "juice" with no fruit = ask by using show_juices.
-- Quantities: digits or words in any language ("two", "do", "ethnayn", "a", "an", "couple"=2). Missing quantity = 1.
+- Quantities: digits or words in any language ("two", "do", "ethnayn", "a", "an", "couple"=2). Set "qty" ONLY when the customer states how many ("2 biryani", "a coke", "one tea", "do chai"). When they just name a dish ("chicken biryani", "shawarma please") leave "qty" out so we can ask how many.
 - add_items: the customer wants dishes added. set_items: they change an existing quantity ("make it 3 biryani", "only 1 tea"). remove_items: they remove dishes.
 - quantity: the message is only a number/quantity answering "how many?" (use "quantity").
 - customize: they ask for a change to dishes (spice, sugar, ice, sauce, no cheese...). Put each change in notes with the matching cart item id; use the listed change name when it fits, else a short lowercase note. If a message both adds dishes and asks for changes, use add_items AND fill notes.
@@ -66,7 +66,7 @@ const SCHEMA = {
   type: 'OBJECT',
   properties: {
     intent: { type: 'STRING', enum: INTENTS },
-    items: { type: 'ARRAY', items: { type: 'OBJECT', properties: { id: { type: 'STRING', enum: [...IDS] }, qty: { type: 'INTEGER' } }, required: ['id', 'qty'] } },
+    items: { type: 'ARRAY', items: { type: 'OBJECT', properties: { id: { type: 'STRING', enum: [...IDS] }, qty: { type: 'INTEGER' } }, required: ['id'] } },
     quantity: { type: 'INTEGER' },
     notes: { type: 'ARRAY', items: { type: 'OBJECT', properties: { id: { type: 'STRING', enum: [...IDS] }, note: { type: 'STRING' } }, required: ['id', 'note'] } },
     address: { type: 'STRING' },
@@ -133,7 +133,7 @@ module.exports = async (req, res) => {
 
     // Validate everything before it reaches the page
     const intent = INTENTS.includes(out.intent) ? out.intent : 'unknown';
-    const items = (Array.isArray(out.items) ? out.items : []).filter(i => IDS.has(i.id)).map(i => ({ id: i.id, qty: Math.max(1, Math.min(50, i.qty | 0 || 1)) }));
+    const items = (Array.isArray(out.items) ? out.items : []).filter(i => IDS.has(i.id)).map(i => ({ id: i.id, qty: Number.isInteger(i.qty) && i.qty > 0 ? Math.min(50, i.qty) : null }));
     const notes = (Array.isArray(out.notes) ? out.notes : []).filter(n => IDS.has(n.id) && clean(n.note, 60)).map(n => ({ id: n.id, note: clean(n.note, 60).toLowerCase() }));
     return res.status(200).json({
       intent, items, notes,

@@ -412,6 +412,8 @@
   function setQty(n) {
     const m = S.pending; S.pending = null; S.awaiting = null;
     addToCart(m.id, n);
+    // changes typed together with the dish name, e.g. "shawarma no pickles"
+    (S.pendingNotes || []).filter(x => x.id === m.id).forEach(x => pushNote(line(m.id), x.note)); S.pendingNotes = null;
     if (S.checkout) return review(`Added 👍 <b>${esc(m.name)} ×${n}</b>`);
     cartSummary();
   }
@@ -718,7 +720,11 @@
         setQty(a.quantity); return true;
       case 'add_items': case 'set_items':
         if (!items.length) return false;
-        items.forEach(i => addToCart(i.id, i.qty, a.intent === 'set_items' && !!line(i.id)));
+        // one dish named without a quantity → ask "How many?" like the button flow
+        if (a.intent === 'add_items' && items.length === 1 && !items[0].qty) {
+          S.pendingNotes = notes; askQty(BY_ID[items[0].id]); return true;
+        }
+        items.forEach(i => addToCart(i.id, i.qty || 1, a.intent === 'set_items' && !!line(i.id)));
         applyNotes(); S.pending = null; S.awaiting = null;
         afterCartChange(); return true;
       case 'remove_items':
@@ -835,6 +841,7 @@
     // adding / changing items
     if (items.length) {
       const setMode = S.awaiting === 'edit' || /\b(make it|change|instead|only|update)\b/.test(t);
+      if (!setMode && items.length === 1 && !items[0].qty) return askQty(BY_ID[items[0].id]);
       items.forEach(f => addToCart(f.id, f.qty || 1, setMode && !!line(f.id)));
       S.awaiting = null; S.pending = null;
       if (S.checkout) return review('Updated ✅');
