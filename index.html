@@ -9,7 +9,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#EEF0F4">
+<meta name="format-detection" content="telephone=no">
 <title>Restaurant AI Ordering Agent</title>
 <meta name="description" content="Order from Grill House on WhatsApp with an AI ordering agent. Built by Ads n' Codes.">
 <meta name="author" content="Ads n' Codes">
@@ -33,11 +35,11 @@
     <a class="byline" href="#credits">Built by <b>Ads n' Codes</b></a>
   </div>
   <div class="controls">
-    <button class="pill" id="soundBtn" type="button" aria-pressed="true">
-      <span class="pill-ico" id="soundIco"></span><span id="soundLbl">Sound on</span>
+    <button class="pill" id="soundBtn" type="button" aria-pressed="true" aria-label="Sound on">
+      <span class="pill-ico" id="soundIco"></span><span class="lbl" id="soundLbl">Sound on</span>
     </button>
-    <button class="pill" id="restartBtn" type="button">
-      <span class="pill-ico restart">&#8634;</span><span>Restart</span>
+    <button class="pill" id="restartBtn" type="button" aria-label="Restart">
+      <span class="pill-ico restart">&#8634;</span><span class="lbl">Restart</span>
     </button>
   </div>
 </header>
@@ -117,6 +119,7 @@
 
 <!-- ============ CREDITS / COPYRIGHT ============ -->
 <footer class="credits" id="credits">
+  <button class="credits-close" id="creditsClose" type="button" aria-label="Close">&times;</button>
   <p class="built">Built by</p>
   <a class="ac-logo" href="https://adsncodes.com" target="_blank" rel="noopener"><img src="assets/brand/ads-n-codes.png" alt="Ads n' Codes"></a>
   <p class="ac-tag">Business Growth &amp; Technology Company</p>

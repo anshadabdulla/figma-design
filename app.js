@@ -138,6 +138,7 @@
     $('#soundIco').innerHTML = sound ? I.speakerOn : I.speakerOff;
     $('#soundLbl').textContent = sound ? 'Sound on' : 'Sound off';
     $('#soundBtn').setAttribute('aria-pressed', String(sound));
+    $('#soundBtn').setAttribute('aria-label', sound ? 'Sound on' : 'Sound off');
   }
   try { sound = localStorage.getItem('gh-sound') !== 'off'; } catch (e) {}
   renderSound();
@@ -148,9 +149,29 @@
   });
 
   /* ================= PHONE SCALING ================= */
+  // Must match the phone media query in styles.css
+  const PHONE = matchMedia('(max-width:560px), (max-height:520px) and (pointer:coarse)');
+
+  // On phones the app fills the *visible* viewport: this tracks browser toolbars
+  // showing/hiding and the on-screen keyboard (iOS Safari, Chrome, Samsung Internet…).
+  function setAppHeight() {
+    const vv = window.visualViewport;
+    const h = Math.round(vv ? vv.height : innerHeight);
+    document.documentElement.style.setProperty('--app-h', h + 'px');
+    if (PHONE.matches && (scrollX || scrollY)) scrollTo(0, 0);
+    if (document.activeElement === input) scrollDown();
+  }
+  if (window.visualViewport) {
+    visualViewport.addEventListener('resize', setAppHeight);
+    visualViewport.addEventListener('scroll', setAppHeight);
+  }
+  addEventListener('resize', setAppHeight);
+  addEventListener('orientationchange', () => setTimeout(() => { setAppHeight(); fit(); }, 250));
+  input.addEventListener('focus', () => setTimeout(scrollDown, 300));
+
   function fit() {
     const wrap = $('#phoneWrap'), phone = $('#phone');
-    if (matchMedia('(max-width:560px)').matches) { wrap.style.cssText = ''; phone.style.transform = ''; return; }
+    if (PHONE.matches) { wrap.style.cssText = ''; phone.style.transform = ''; return; }
     const top = $('.stage').getBoundingClientRect().top;
     const s = Math.min(1, Math.max(.5, (innerHeight - top - 20) / 876));
     wrap.style.width = 417 * s + 'px'; wrap.style.height = 876 * s + 'px';
@@ -585,9 +606,132 @@
     return m ? (/^\d+$/.test(m[1]) ? +m[1] : NUMS[m[1]]) : null;
   };
 
-  function onText(raw) {
+  /* ---------- AI understanding (Gemini via /api/understand) ----------
+     Every typed message goes to the server function first; it returns a structured intent.
+     If the function is missing, slow or fails, the keyword matcher below (localUnderstand) takes over. */
+  let aiOff = location.protocol === 'file:';
+  const ABORTED = {};
+  function stageName() {
+    if ((S.awaiting === 'qty' || S.awaiting === 'qtyNum') && S.pending) return 'qty';
+    if (S.awaiting === 'customize') return 'customize';
+    if (S.awaiting === 'edit') return 'editing order';
+    if (S.checkout) return 'review';
+    return S.cart.length ? 'cart' : 'browsing';
+  }
+  async function aiUnderstand(text) {
+    if (aiOff) return null;
+    const t = token, prev = lastSide;
+    busy = true; showTyping(true);
+    const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 7000);
+    try {
+      const r = await fetch('api/understand', {
+        method: 'POST', signal: ctrl.signal, headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text, stage: stageName(), cart: S.cart.map(l => ({ id: l.id, qty: l.qty })), pending: S.pending ? S.pending.id : null }),
+      });
+      if (r.status === 404 || r.status === 405 || r.status === 503) aiOff = true; // no function / key on this host
+      if (t !== token) return ABORTED;
+      return r.ok ? await r.json() : null;
+    } catch (e) {
+      return t !== token ? ABORTED : null;
+    } finally {
+      clearTimeout(timer);
+      if (t === token) { showTyping(false); lastSide = prev; busy = false; }
+    }
+  }
+
+  function afterCartChange() {
+    if (S.checkout) return review('Updated ✅');
+    return bot({ text:`<p>Got it 🧾</p><p>${itemsHtml()}</p><p><b>AED ${subtotal()}</b></p>`,
+      buttons:[{ label:'Order this', run: orderThis }, { label:'Add more', run: addMore }] });
+  }
+
+  // Maps the AI's intent onto the same flows the buttons use. Returns false to fall back.
+  function handleAI(a) {
+    const items = a.items || [], notes = a.notes || [];
+    const applyNotes = () => notes.forEach(n => { const l = line(n.id) || S.cart[0]; if (l) pushNote(l, n.note); });
+    switch (a.intent) {
+      case 'quantity':
+        if (!S.pending || !a.quantity) return false;
+        setQty(a.quantity); return true;
+      case 'add_items': case 'set_items':
+        if (!items.length) return false;
+        items.forEach(i => addToCart(i.id, i.qty, a.intent === 'set_items' && !!line(i.id)));
+        applyNotes(); S.pending = null; S.awaiting = null;
+        afterCartChange(); return true;
+      case 'remove_items':
+        if (!items.length) return false;
+        items.forEach(i => { S.cart = S.cart.filter(l => l.id !== i.id); });
+        S.awaiting = null;
+        if (!S.cart.length) { S.checkout = false; bot({ text:`<p>Removed. Your cart is empty now 🛒</p>`, buttons: menuButtons() }); return true; }
+        S.checkout ? review('Removed ✅') : cartSummary("Removed ✅ Here's your order now 🧾"); return true;
+      case 'customize':
+        if (!S.cart.length || !notes.length) return false;
+        applyNotes();
+        if (S.awaiting === 'customize') proceedToReview(true);
+        else if (S.checkout) review('Noted 👍');
+        else cartSummary("Noted 👍 Here's your order 🧾");
+        return true;
+      case 'no_changes':
+        if (S.awaiting !== 'customize') return false;
+        applyMods([]); return true;
+      case 'order_this':
+        if (!S.cart.length) return false;
+        orderThis(); return true;
+      case 'confirm':
+        if (S.checkout) { confirmOrder(); return true; }
+        if (S.cart.length) { orderThis(); return true; }
+        return false;
+      case 'pickup':
+        S.mode = 'pickup';
+        S.checkout ? review('Switched to pickup 🏃') : bot({ text:`<p>Pickup it is 🏃 — no delivery fee. What would you like?</p>`, buttons: menuButtons() });
+        return true;
+      case 'delivery':
+        S.mode = 'delivery';
+        S.checkout ? review('Switched to delivery 🛵') : bot({ text:`<p>Delivery it is 🛵</p>` });
+        return true;
+      case 'pay_online':
+        if (S.checkout) { payOnline(); return true; }
+        bot({ text:`<p>Sure 💳 You can pay online right before confirming your order.</p>` }); return true;
+      case 'show_menu': welcome(true); return true;
+      case 'show_full_menu': fullMenu(); return true;
+      case 'show_drinks': drinks(); return true;
+      case 'show_juices': juices(); return true;
+      case 'show_cart': viewCart(); return true;
+      case 'clear_cart': clearCart(); return true;
+      case 'change_address':
+        if (!a.address) return false;
+        S.profile.address = a.address;
+        S.checkout ? review('Address updated 📍') : bot({ text:`<p>Got it — delivering to <b>${esc(a.address)}</b> 📍</p>` });
+        return true;
+      case 'change_phone':
+        if (!a.phone) return false;
+        S.profile.phone = a.phone;
+        S.checkout ? review('Contact number updated 📞') : bot({ text:`<p>Saved your number <b>${esc(a.phone)}</b> 📞</p>` });
+        return true;
+      case 'greeting': welcome(S.cart.length > 0); return true;
+      case 'thanks': bot({ text:`<p>You're welcome 💚 Anything else I can get you?</p>` }); return true;
+      case 'not_on_menu':
+        bot({ text:`<p>Sorry, we don't have <b>${esc(a.unavailable || 'that')}</b> right now 🙏</p><p>Here's what we can make for you 👇</p>`, buttons: menuButtons() });
+        return true;
+      case 'question':
+        if (!a.reply) return false;
+        bot({ text:`<p>${esc(a.reply)}</p>` }); return true;
+      default: return false;
+    }
+  }
+
+  async function onText(raw) {
     const text = raw.trim(); if (!text) return;
     userSay(text);
+    // a bare number answering "how many?" needs no round trip
+    if ((S.awaiting === 'qty' || S.awaiting === 'qtyNum') && S.pending && /^\d{1,2}$/.test(text)) return setQty(Math.min(+text, 50));
+    const ai = await aiUnderstand(text);
+    if (ai === ABORTED) return;
+    if (ai && handleAI(ai)) return;
+    localUnderstand(text);
+  }
+
+  function localUnderstand(text) {
     const t = text.toLowerCase();
 
     // quantity replies
@@ -711,6 +855,11 @@
   const yr = document.getElementById('year'); if (yr) yr.textContent = Math.max(2026, new Date().getFullYear());
   console.info('%cRestaurant AI Ordering Agent — built by Ads n\x27 Codes · adsncodes.com', 'font:600 13px sans-serif;color:#1DAA61');
 
-  start(); fit();
+  // "Built by" opens the credits as a full-screen panel on phones; on desktop it scrolls to the footer
+  const credits = $('#credits');
+  $('.byline').addEventListener('click', e => { if (PHONE.matches) { e.preventDefault(); credits.classList.add('open'); } });
+  $('#creditsClose').addEventListener('click', () => credits.classList.remove('open'));
+
+  setAppHeight(); start(); fit();
   if (document.fonts) document.fonts.ready.then(fit);
 })();

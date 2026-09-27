@@ -24,6 +24,8 @@
 }
 *{box-sizing:border-box;}
 html,body{height:100%;}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+body{-webkit-tap-highlight-color:transparent;}
 body{margin:0;background:var(--page);font-family:var(--ui);color:var(--wa-ink);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
 button{font:inherit;color:inherit;cursor:pointer;}
 img{display:block;}
@@ -233,25 +235,66 @@ img{display:block;}
 .ac-contact a:hover{color:#3F3F46;text-decoration:underline;}
 .ac-copy{margin-top:12px !important;font-size:14px;color:#A6AAB2;}
 
-/* ---------- small screens: phone fills the viewport ---------- */
-@media (max-width:560px){
-  .byline{font-size:11.5px;margin-top:0;}
-  .topbar{padding:10px 16px 8px;gap:10px;}
+/* ---------- phones: full-screen app shell ----------
+   Portrait phones (any width up to 560px) and phones held sideways.
+   Height follows the *visible* viewport (--app-h, set from visualViewport in app.js),
+   so the chat and composer always fit above browser bars and the keyboard. */
+.credits-close{display:none;}
+@media (max-width:560px), (max-height:520px) and (pointer:coarse){
+  html,body{height:100%;overflow:hidden;overscroll-behavior:none;}
+  body{position:fixed;inset:0;display:flex;flex-direction:column;height:100vh;height:100dvh;height:var(--app-h,100dvh);}
+  button,a,input{touch-action:manipulation;}
+
+  .topbar{flex:none;gap:10px;padding:max(8px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) 8px max(14px,env(safe-area-inset-left));}
   .title{font-size:15.5px;line-height:1.2;}
+  .brandline{flex:1;}
+  .byline{font-size:11.5px;margin-top:0;}
   .controls{gap:6px;flex:none;}
-  .pill{height:32px;padding:0 11px;font-size:13px;gap:5px;}
+  .pill{height:34px;padding:0 11px;font-size:13px;gap:5px;}
   .pill-ico,.pill-ico svg{width:17px;height:17px;}
-  .stage{height:calc(100dvh - 58px);padding:0;}
-  .credits{margin-top:0;padding:32px 16px 36px;}
-  .built{font-size:16px;}
-  .ac-logo img{width:104px;}
-  .ac-tag{font-size:16px;}
-  .ac-contact{flex-direction:column;font-size:14.5px;}
-  .ac-contact span{display:none;}
+
+  .stage{flex:1;min-height:0;padding:0;}
   .phone-wrap{width:100% !important;height:100% !important;}
   .phone{position:static;width:100%;height:100%;padding:0;border-radius:0;box-shadow:none;background:none;transform:none !important;}
   .island,.home-ind,.statusbar{display:none;}
   .screen{width:100%;height:100%;border-radius:0;}
   .view{inset:0;}
-  .composer,.sheet-foot{padding-bottom:max(10px,env(safe-area-inset-bottom));}
+  .wa-head{padding-left:max(4px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right));}
+  .composer{padding:6px max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));}
+  .sheet-foot{padding-bottom:max(12px,env(safe-area-inset-bottom));}
+  .card{flex-basis:min(222px,66vw);}
+  .saved.editing .saved-val{font-size:16px;}
+  .wa-head{gap:4px;}
+  .wa-head .ic{width:30px;}   /* keeps iOS from zooming on edit */
+
+  /* credits open as a full-screen panel from the "Built by" link */
+  .credits{position:fixed;inset:0;z-index:100;margin:0;border:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:max(24px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom));background:var(--page);overflow-y:auto;
+    opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;}
+  .credits.open{opacity:1;visibility:visible;}
+  .credits-close{display:flex;position:absolute;top:max(12px,env(safe-area-inset-top));right:14px;width:40px;height:40px;border:0;border-radius:50%;
+    background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.1);font-size:26px;line-height:1;color:#3F3F46;align-items:center;justify-content:center;padding:0 0 3px;}
+  .built{font-size:16px;}
+  .ac-logo img{width:112px;}
+  .ac-tag{font-size:16px;}
+  .ac-contact{flex-direction:column;font-size:15px;gap:8px;}
+  .ac-contact span{display:none;}
+}
+/* small phones (iPhone SE, compact Androids): icon-only buttons */
+@media (max-width:380px){
+  .pill{width:36px;height:36px;padding:0;justify-content:center;}
+  .pill .lbl{display:none;}
+  .title{font-size:14.5px;}
+  .wa-name{font-size:14.5px;}
+  .wa-head .ic{width:28px;}
+  .wa-head [data-ic=video]{display:none;}
+}
+/* phones held sideways: keep the conversation a readable width */
+@media (max-height:520px) and (pointer:coarse) and (min-width:561px){
+  .topbar{padding-top:5px;padding-bottom:5px;}
+  .brandline{display:flex;align-items:baseline;gap:12px;}
+  .title{font-size:15px;white-space:nowrap;}
+  .pill{height:30px;}
+  .chat-inner,.composer{width:100%;max-width:720px;margin-left:auto;margin-right:auto;}
+  .sheet{max-height:92%;max-width:560px;margin:0 auto;}
 }
