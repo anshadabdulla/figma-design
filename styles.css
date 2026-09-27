@@ -273,7 +273,8 @@ img{display:block;}
   .title{font-size:15px;line-height:1.2;}
   .pill{width:36px;height:36px;padding:0;justify-content:center;}
   .pill .lbl{display:none;}
-  .stage{flex:1;min-height:0;align-items:center;padding:0 0 max(6px,env(safe-area-inset-bottom));transition:transform .2s ease-out;}
+  .stage{flex:1;min-height:0;width:100%;align-items:center;padding:0 0 max(6px,env(safe-area-inset-bottom));transition:transform .2s ease-out;}
+  .phone-wrap{flex:none;}
   .phone{box-shadow:0 0 0 2px #3a3a3e inset,0 0 0 1px #000,0 24px 50px -24px rgba(15,23,42,.45);}
 }
 @media (max-width:340px){ .title{font-size:13.5px;} }

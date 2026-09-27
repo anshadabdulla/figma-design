@@ -234,12 +234,22 @@
     const wrap = $('#phoneWrap'), phone = $('#phone');
     if (fullScreen()) { wrap.style.cssText = ''; phone.style.transform = ''; return; }
     const top = $('.topbar').getBoundingClientRect().bottom;
-    const s = UPRIGHT.matches
-      ? Math.min(1, (innerWidth - 16) / 417, (stableH - top - 10) / 876)
-      : Math.min(1, Math.max(.5, (innerHeight - top - 32) / 876));
+    let s;
+    if (UPRIGHT.matches) {
+      // Measure the real space on the page: some phone/in-app browsers misreport innerWidth
+      const w = Math.min(innerWidth, document.documentElement.clientWidth || innerWidth, $('.stage').clientWidth || innerWidth);
+      s = Math.min(1, (w - 16) / 417, (stableH - top - 10) / 876);
+    } else {
+      s = Math.min(1, Math.max(.5, (innerHeight - top - 32) / 876));
+    }
+    s = Math.floor(s * 1000) / 1000;   // round down so the frame never spills past the edge
     wrap.style.width = 417 * s + 'px'; wrap.style.height = 876 * s + 'px';
     phone.style.transform = `scale(${s})`;
   }
+  // Re-fit whenever the page area actually changes size (late viewport setup, rotation, browser bars)
+  if (window.ResizeObserver) new ResizeObserver(() => { if (UPRIGHT.matches) fit(); }).observe(document.documentElement);
+  addEventListener('pageshow', relayout);
+  addEventListener('load', () => { relayout(); setTimeout(relayout, 300); setTimeout(relayout, 1200); });
 
 
   /* ================= RENDER HELPERS ================= */
