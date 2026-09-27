@@ -161,14 +161,6 @@
     if (sound) sfx.recv();
   });
 
-  /* ================= PROGRESS TRACKER ================= */
-  const STEPS = [['ad','Ad'],['menu','Menu'],['cart','Cart'],['customize','Customize'],['review','Review'],['confirmed','Confirmed']];
-  function setStage(key) {
-    const idx = STEPS.findIndex(s => s[0] === key);
-    $('#tracker').innerHTML = STEPS.map(([k, l], i) =>
-      `${i ? '<span class="step-sep">›</span>' : ''}<span class="step ${i < idx ? 'done' : ''} ${i === idx ? 'now' : ''}"><i></i>${l}</span>`).join('');
-  }
-
   /* ================= PHONE SCALING ================= */
   function fit() {
     const wrap = $('#phoneWrap'), phone = $('#phone');
@@ -327,7 +319,6 @@
   ];
 
   async function welcome(back = false) {
-    setStage('menu');
     await bot(
       { text: back
           ? `<p>Here's the menu again 👇</p><p>Pick something below, or just tell me what you're craving.</p>`
@@ -364,7 +355,6 @@
   }
   function cartSummary(lead) {
     if (!S.cart.length) return viewCart();
-    setStage('cart');
     const single = S.cart.length === 1;
     const l = S.cart[0], m = BY_ID[l.id];
     const text = single && !lead
@@ -380,7 +370,6 @@
   }
 
   function drinks() {
-    setStage('cart');
     bot(
       { text:`<p>Here's what we're pouring today ☕🥤</p>` },
       { carousel: GROUP('drinks') },
@@ -417,7 +406,6 @@
   function orderThis() {
     if (!S.cart.length) return viewCart();
     if (S.checkout) return review();
-    setStage('customize');
     S.awaiting = 'customize';
     const labels = [];
     S.cart.forEach(l => MODS[BY_ID[l.id].mod].forEach(([lab]) => { if (!labels.includes(lab)) labels.push(lab); }));
@@ -472,7 +460,7 @@
   }
 
   function review(lead) {
-    setStage('review'); freezeSaved();
+    freezeSaved();
     const p = S.profile, delivery = S.mode === 'delivery';
     const text = `<p>${lead ? lead + '<br>' : ''}Here's your order 👇</p>
       ${delivery ? savedBox('Address', 'address', p.address, true) : savedBox('Pickup from', 'store', STORE, false)}
@@ -548,7 +536,7 @@
 
   async function confirmOrder() {
     if (!S.cart.length) return viewCart();
-    setStage('confirmed'); freezeSaved();
+    freezeSaved();
     const p = S.profile, delivery = S.mode === 'delivery';
     const hero = S.cart.find(l => !isDrink(BY_ID[l.id])) || S.cart[0];
     const hm = BY_ID[hero.id];
@@ -657,7 +645,6 @@
       items.forEach(f => addToCart(f.id, f.qty || 1, setMode && !!line(f.id)));
       S.awaiting = null; S.pending = null;
       if (S.checkout) return review('Updated ✅');
-      setStage('cart');
       return bot({ text:`<p>Got it 🧾</p><p>${itemsHtml()}</p><p><b>AED ${subtotal()}</b></p>`,
         buttons:[{ label:'Order this', run: orderThis }, { label:'Add more', run: addMore }] });
     }
@@ -741,7 +728,6 @@
       <div class="notice">🔒 This business uses a secure service from Meta to manage this chat. Tap to learn more.</div>`;
     waStatus.textContent = 'Typically replies instantly'; waStatus.classList.remove('typing');
     input.value = ''; syncSend();
-    setStage('ad');
   }
   $('#restartBtn').addEventListener('click', start);
 
