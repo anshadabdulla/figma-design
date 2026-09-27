@@ -109,29 +109,66 @@
   const now = () => new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
   const scrollDown = () => requestAnimationFrame(() => chat.scrollTo({ top: chat.scrollHeight, behavior:'smooth' }));
 
-  /* ================= SOUND (WhatsApp-style, synthesized) ================= */
+  /* ================= SOUND =================
+     Plays assets/sounds/sent.mp3 and received.mp3 when they exist (drop in the real
+     WhatsApp tones); otherwise falls back to close synthesized "bloop" tones. */
   let actx = null;
+  const SOUND_FILES = { sent: 'assets/sounds/sent.mp3', recv: 'assets/sounds/received.mp3' };
+  const buffers = {};
   function ac() {
-    if (!actx) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; actx = new C(); }
+    if (!actx) {
+      const C = window.AudioContext || window.webkitAudioContext; if (!C) return null;
+      actx = new C();
+      if (location.protocol !== 'file:') Object.entries(SOUND_FILES).forEach(([k, url]) =>
+        fetch(url).then(r => (r.ok ? r.arrayBuffer() : Promise.reject()))
+          .then(b => new Promise((ok, no) => actx.decodeAudioData(b, ok, no)))
+          .then(buf => { buffers[k] = buf; }).catch(() => {}));
+    }
     if (actx.state === 'suspended') actx.resume();
     return actx;
   }
-  function blip(f0, f1, start, dur, vol) {
+  // Browsers only allow audio after a tap: unlock on the visitor's first touch anywhere
+  ['pointerdown', 'keydown', 'touchstart'].forEach(ev => addEventListener(ev, () => ac(), { once: true, passive: true }));
+
+  function playBuffer(buf, vol) {
     const c = ac(); if (!c) return;
-    const t = c.currentTime + start, o = c.createOscillator(), g = c.createGain();
-    o.type = 'sine';
-    o.frequency.setValueAtTime(f0, t);
-    o.frequency.exponentialRampToValueAtTime(f1, t + dur * .6);
+    const s = c.createBufferSource(), g = c.createGain();
+    s.buffer = buf; g.gain.value = vol;
+    s.connect(g).connect(c.destination); s.start();
+  }
+  // A water-drop "bloop": fast upward pitch sweep with a soft attack and quick decay
+  function bloop(c, t, f0, f1, sweep, dur, vol) {
+    const o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(), g2 = c.createGain(), lp = c.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 3200; lp.Q.value = .7;
+    o.type = 'sine'; o2.type = 'triangle';
+    o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + sweep);
+    o2.frequency.setValueAtTime(f0 * 2, t); o2.frequency.exponentialRampToValueAtTime(f1 * 2, t + sweep);
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.004);
+    g.gain.exponentialRampToValueAtTime(vol * .35, t + sweep);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g).connect(c.destination);
-    o.start(t); o.stop(t + dur + .02);
+    g2.gain.value = .12;
+    o.connect(g); o2.connect(g2).connect(g); g.connect(lp).connect(c.destination);
+    o.start(t); o2.start(t); o.stop(t + dur + .02); o2.stop(t + dur + .02);
   }
   const sfx = {
-    sent() { if (sound) blip(520, 980, 0, .12, .16); },
-    recv() { if (sound) { blip(1050, 1180, 0, .11, .12); blip(1420, 1560, .085, .16, .1); } },
-    tap()  { if (sound) blip(700, 760, 0, .05, .05); },
+    sent() {                       // outgoing: single quick rising "bloop"
+      if (!sound) return;
+      if (buffers.sent) return playBuffer(buffers.sent, .9);
+      const c = ac(); if (c) bloop(c, c.currentTime + .005, 330, 1150, .05, .11, .32);
+    },
+    recv() {                       // incoming while chat is open: soft double "pop-pop"
+      if (!sound) return;
+      if (buffers.recv) return playBuffer(buffers.recv, .9);
+      const c = ac(); if (!c) return;
+      const t = c.currentTime + .005;
+      bloop(c, t, 520, 1040, .035, .09, .2);
+      bloop(c, t + .09, 700, 1400, .035, .12, .17);
+    },
+    tap() {
+      if (!sound) return;
+      const c = ac(); if (c) bloop(c, c.currentTime + .005, 600, 900, .02, .05, .06);
+    },
   };
 
   function renderSound() {
