@@ -181,6 +181,8 @@ img{display:block;}
 .field .ic{width:30px;height:30px;}
 .mic{flex:none;width:46px;height:46px;border-radius:50%;border:0;background:var(--wa-btn);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 2px rgba(0,0,0,.15);transition:transform .12s;}
 .mic:active{transform:scale(.93);}
+.mic.nudge{animation:nudge 1.6s ease-out infinite;}
+@keyframes nudge{0%{box-shadow:0 0 0 0 rgba(29,170,97,.55);}70%{box-shadow:0 0 0 14px rgba(29,170,97,0);}100%{box-shadow:0 0 0 0 rgba(29,170,97,0);}}
 
 /* list sheet */
 .sheet-scrim{position:absolute;inset:0;z-index:10;background:rgba(11,20,26,.4);opacity:0;pointer-events:none;transition:opacity .25s;}

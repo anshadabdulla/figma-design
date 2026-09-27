@@ -794,6 +794,8 @@
     userSay(text);
     // a bare number answering "how many?" needs no round trip
     if ((S.awaiting === 'qty' || S.awaiting === 'qtyNum') && S.pending && /^\d{1,2}$/.test(text)) return setQty(Math.min(+text, 50));
+    // a plain greeting is answered instantly
+    if (/^(hi+|hello+|hey+|hai|salam|salaam|assalamu alaikum)[\s!.]*$/i.test(text)) return localUnderstand(text);
     const ai = await aiUnderstand(text);
     if (ai === ABORTED) return;
     if (ai && handleAI(ai)) return;
@@ -869,6 +871,7 @@
   $('#composer').addEventListener('submit', e => {
     e.preventDefault();
     if (busy || !input.value.trim()) return;
+    sendBtn.classList.remove('nudge');
     const v = input.value; input.value = ''; syncSend(); onText(v);
   });
 
@@ -903,7 +906,7 @@
   });
 
   /* ================= START ================= */
-  // The demo opens straight in the WhatsApp chat; the customer's "Hi" is typed and sent for them.
+  // The demo opens straight in the WhatsApp chat.
   async function start() {
     token++; busy = false; S = freshState(); lastSide = null;
     closeSheet(); $('#pay').classList.remove('show');
@@ -911,13 +914,11 @@
       <div class="notice">🔒 This business uses a secure service from Meta to manage this chat. Tap to learn more.</div>`;
     waStatus.textContent = 'Typically replies instantly'; waStatus.classList.remove('typing');
     input.value = ''; syncSend();
+    // Like a WhatsApp click-to-chat link: "Hi" is pre-typed and waits for the customer to tap send
     const t = token;
-    await wait(600); if (t !== token) return;
+    await wait(400); if (t !== token) return;
     input.value = 'Hi'; syncSend();
-    await wait(650); if (t !== token) return;
-    input.value = ''; syncSend();
-    userSay('Hi');
-    welcome();
+    sendBtn.classList.add('nudge');
   }
   $('#restartBtn').addEventListener('click', () => { ac(); start(); });
   $('#waBack').addEventListener('click', () => { ac(); start(); });
