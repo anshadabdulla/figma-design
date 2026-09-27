@@ -15,7 +15,7 @@ const MENU = [
   ['mutton-biryani', 'Mutton Biryani', 23, 'mains', 'Less spicy, Extra raita, Extra spicy'],
   ['grilled-chicken', 'Grilled Chicken (Half)', 20, 'mains', 'Less spicy, Extra garlic sauce, No fries'],
   ['charcoal-chicken', 'Charcoal Grilled Chicken (Half)', 23, 'mains', 'Less spicy, Extra garlic sauce, No fries'],
-  ['chicken-shawarma', 'Chicken Shawarma', 8, 'mains', 'Extra garlic, No pickles, Spicy'],
+  ['chicken-shawarma', 'Chicken Shawarma', 8, 'mains', 'Extra garlic, No pickles, Not spicy, Extra spicy'],
   ['chicken-burger', 'Chicken Burger', 10, 'mains', 'No cheese, Extra sauce, No onions'],
   ['club-sandwich', 'Club Sandwich', 15, 'mains', 'No mayo, Extra fries, Toasted well'],
   ['naan-butter-chicken', 'Naan & Butter Chicken Combo', 22, 'mains', 'Less spicy, Extra naan, Extra spicy'],
@@ -54,7 +54,8 @@ Rules:
 - Quantities: digits or words in any language ("two", "do", "ethnayn", "a", "an", "couple"=2). Set "qty" ONLY when the customer states how many ("2 biryani", "a coke", "one tea", "do chai"). When they just name a dish ("chicken biryani", "shawarma please") leave "qty" out so we can ask how many.
 - add_items: the customer wants dishes added. set_items: they change an existing quantity ("make it 3 biryani", "only 1 tea"). remove_items: they remove dishes.
 - quantity: the message is only a number/quantity answering "how many?" (use "quantity").
-- customize: they ask for a change to dishes (spice, sugar, ice, sauce, no cheese...). Put each change in notes with the matching cart item id; use the listed change name when it fits, else a short lowercase note. If a message both adds dishes and asks for changes, use add_items AND fill notes.
+- customize: they ask for a change to dishes (spice, sugar, ice, sauce, no cheese...). Put each change in notes with the matching cart item id. If a message both adds dishes and asks for changes, use add_items AND fill notes.
+- Notes must keep the customer's EXACT meaning. Use a listed change only when it means the same thing: same ingredient AND same direction (no / less / extra). Never swap in a different listed change just because it looks similar: "no spicy" is NOT "no pickles", "no garlic" is NOT "extra garlic", "extra cheese" is NOT "no cheese". If nothing listed means the same, write a short lowercase note in their words ("not spicy", "no garlic", "extra cheese", "well done"). Examples: shawarma "no spicy" → "not spicy"; biryani "no spicy" → "not spicy"; biryani "not too spicy" → "less spicy"; burger "extra cheese" → "extra cheese".
 - no_changes: "no", "no changes", "that's all fine" while being asked about customizing.
 - order_this: they want to check out / finish ("that's all", "order now", "checkout"). confirm: they confirm the final order ("yes confirm", "place it", "ok go").
 - change_address / change_phone: they give a new delivery address or phone number (put it in address / phone).
@@ -112,25 +113,37 @@ module.exports = async (req, res) => {
     message: text,
   };
 
-  const model = process.env.GEMINI_MODEL || 'gemini-flash-lite-latest';
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 8000);
-  try {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-      method: 'POST',
-      signal: ctrl.signal,
-      headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM }] },
-        contents: [{ role: 'user', parts: [{ text: JSON.stringify(context) }] }],
-        generationConfig: { temperature: 0, maxOutputTokens: 1024, responseMimeType: 'application/json', responseSchema: SCHEMA },
-      }),
-    });
-    const data = await r.json();
-    if (!r.ok) return res.status(502).json({ error: 'upstream', status: r.status });
-    const raw = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
-    let out; try { out = JSON.parse(raw); } catch { return res.status(502).json({ error: 'bad_json' }); }
+  // Gemini latency occasionally spikes: give the main model 4 s, then retry once on a second model.
+  const models = [process.env.GEMINI_MODEL || 'gemini-flash-lite-latest', process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.1-flash-lite'];
+  let out = null, lastErr = 'timeout';
+  for (const model of models) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 4000);
+    try {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+        method: 'POST',
+        signal: ctrl.signal,
+        headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SYSTEM }] },
+          contents: [{ role: 'user', parts: [{ text: JSON.stringify(context) }] }],
+          generationConfig: {
+            temperature: 0, maxOutputTokens: 1024, responseMimeType: 'application/json', responseSchema: SCHEMA,
+            thinkingConfig: { thinkingLevel: 'minimal' },
+          },
+        }),
+      });
+      const data = await r.json();
+      if (!r.ok) { lastErr = 'upstream_' + r.status; continue; }
+      const raw = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
+      try { out = JSON.parse(raw); break; } catch { lastErr = 'bad_json'; }
+    } catch (e) {
+      lastErr = 'timeout';
+    } finally { clearTimeout(timer); }
+  }
+  if (!out) return res.status(504).json({ error: lastErr });
 
+  {
     // Validate everything before it reaches the page
     const intent = INTENTS.includes(out.intent) ? out.intent : 'unknown';
     const items = (Array.isArray(out.items) ? out.items : []).filter(i => IDS.has(i.id)).map(i => ({ id: i.id, qty: Number.isInteger(i.qty) && i.qty > 0 ? Math.min(50, i.qty) : null }));
@@ -141,7 +154,5 @@ module.exports = async (req, res) => {
       address: clean(out.address, 120), phone: clean(out.phone, 24),
       unavailable: clean(out.unavailable, 40), reply: clean(out.reply, 300),
     });
-  } catch (e) {
-    return res.status(504).json({ error: 'timeout' });
-  } finally { clearTimeout(timer); }
+  }
 };

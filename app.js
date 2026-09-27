@@ -35,17 +35,32 @@
   };
 
   /* ================= MENU ================= */
+  // [label, nouns it's about]. Direction (none / less / more) comes from the label's first word,
+  // so "no garlic" never matches "Extra garlic" and "no spicy" never matches "Extra spicy".
   const MODS = {
-    biryani: [['Less spicy',['less spic','mild','not spicy','no spice','not too spicy']],['Extra raita',['raita']],['Extra spicy',['extra spic','more spic','very spic']]],
-    grill:   [['Less spicy',['less spic','mild','not spicy']],['Extra garlic sauce',['garlic','sauce','toum']],['No fries',['no fries','without fries']]],
-    shawarma:[['Extra garlic',['garlic','sauce','toum']],['No pickles',['pickle']],['Spicy',['spic']]],
+    biryani: [['Less spicy',['spic','chil','hot']],['Extra raita',['raita']],['Extra spicy',['spic','chil','hot']]],
+    grill:   [['Less spicy',['spic','chil','hot']],['Extra garlic sauce',['garlic','sauce','toum']],['No fries',['fries','chips']]],
+    shawarma:[['Extra garlic',['garlic','sauce','toum']],['No pickles',['pickle']],['Not spicy',['spic','chil','hot']],['Extra spicy',['spic','chil','hot']]],
     burger:  [['No cheese',['cheese']],['Extra sauce',['sauce']],['No onions',['onion']]],
-    sandwich:[['No mayo',['mayo']],['Extra fries',['fries']],['Toasted well',['toast']]],
-    combo:   [['Less spicy',['less spic','mild','not spicy']],['Extra naan',['naan','bread']],['Extra spicy',['extra spic','more spic']]],
-    hot:     [['Less sugar',['less sugar','low sugar','half sugar']],['No sugar',['no sugar','without sugar','sugar free','sugarless']],['Extra strong',['strong']]],
-    cold:    [['No ice',['no ice','without ice','less ice']],['Less sugar',['less sugar','low sugar','no sugar']]],
+    sandwich:[['No mayo',['mayo']],['Extra fries',['fries','chips']],['Toasted well',['toast']]],
+    combo:   [['Less spicy',['spic','chil','hot']],['Extra naan',['naan','bread']],['Extra spicy',['spic','chil','hot']]],
+    hot:     [['Less sugar',['sugar','sweet']],['No sugar',['sugar','sweet']],['Extra strong',['strong']]],
+    cold:    [['No ice',['ice']],['Less sugar',['sugar','sweet']]],
     can:     [['Extra chilled',['chill','cold','ice']]],
   };
+  const labelDir = lab => /^(no|not)\b/i.test(lab) ? 'none' : /^less\b/i.test(lab) ? 'less' : 'more';
+  function clauseDir(cl) {
+    if (/\bnot (too|very|so)\b/.test(cl)) return 'less';
+    if (/\b(no|not|non|without|skip|hold|remove|dont|don'?t|zero|free|nothing)\b|sugarless/.test(cl)) return 'none';
+    if (/\b(less|low|half|little|mild|light|lite|reduce|medium)\b/.test(cl)) return 'less';
+    return 'more';
+  }
+  // The preset that matches both the thing and the direction the customer asked for, if any
+  function matchMod(item, cl) {
+    const dir = clauseDir(cl);
+    const m = MODS[item.mod].find(([lab, nouns]) => nouns.some(n => cl.includes(n)) && labelDir(lab) === dir);
+    return m ? m[0] : null;
+  }
 
   const MENU = [
     // mains
@@ -423,7 +438,9 @@
     const m = S.pending; S.pending = null; S.awaiting = null;
     addToCart(m.id, n);
     // changes typed together with the dish name, e.g. "shawarma no pickles"
-    (S.pendingNotes || []).filter(x => x.id === m.id).forEach(x => pushNote(line(m.id), x.note)); S.pendingNotes = null;
+    (S.pendingNotes || []).filter(x => x.id === m.id).forEach(x => pushNote(line(m.id), x.note));
+    if (S.pendingText) applyTypedMods(S.pendingText, [m.id]);
+    S.pendingNotes = null; S.pendingText = null;
     if (S.checkout) return review(`Added 👍 <b>${esc(m.name)} ×${n}</b>`);
     cartSummary();
   }
@@ -504,23 +521,43 @@
   }
   function pushNote(l, note) { if (!l.notes.includes(note)) l.notes.push(note); }
 
-  function parseMods(text) {
+  // Applies typed changes ("no spicy, extra raita") to the cart. A change that matches a preset in
+  // the same direction uses the preset; anything else is kept in the customer's own words.
+  function applyTypedMods(text, onlyIds) {
     let any = false;
-    const clauses = text.toLowerCase().split(/,|;|\band\b|\balso\b|\bplus\b|&/).map(s => s.trim()).filter(Boolean);
+    const pool = onlyIds ? S.cart.filter(l => onlyIds.includes(l.id)) : S.cart;
+    const clauses = text.toLowerCase().replace(/[’']/g, "'").split(/,|;|\band\b|\balso\b|\bplus\b|&/).map(s => s.trim()).filter(Boolean);
     clauses.forEach(cl => {
-      const named = findItems(cl).map(f => line(f.id)).filter(Boolean);
-      const targets = named.length ? named : S.cart;
+      const named = findItems(cl).map(f => line(f.id)).filter(l => l && pool.includes(l));
+      const targets = named.length ? named : pool;
       let hit = false;
-      targets.forEach(l => MODS[BY_ID[l.id].mod].forEach(([lab, keys]) => {
-        if (keys.some(k => cl.includes(k))) { pushNote(l, lab.toLowerCase()); hit = true; }
-      }));
-      if (!hit && cl.replace(/[^a-z]/g, '').length > 2) {
-        const note = cl.replace(/^(please|pls|can you|make it|make the|i want|with)\s+/g, '').replace(/[.!]+$/, '');
-        pushNote(targets[0], note); hit = true;
+      targets.forEach(l => { const lab = matchMod(BY_ID[l.id], cl); if (lab) { pushNote(l, lab.toLowerCase()); hit = true; } });
+      const words = cl.replace(/[^a-z]/g, '');
+      if (!hit && words.length > 2 && !/^(pls|please|thanks|thank you|ok|okay)$/.test(cl)) {
+        // strip filler and the dish name, keep what they actually asked for
+        let note = cl.replace(/\b\d+\b/g, '').trim().replace(/^(please|pls|can you|could you|make it|make the|i want|i need|with)\s+/g, '').replace(/[.!?]+$/, '');
+        findItems(note).forEach(f => { BY_ID[f.id].alias.forEach(a => { note = note.replace(a, ''); }); });
+        note = note.replace(/\s+/g, ' ').trim();
+        const about = targets.find(l => MODS[BY_ID[l.id].mod].some(([, nouns]) => nouns.some(n => cl.includes(n))))
+          || targets.find(l => !isDrink(BY_ID[l.id])) || targets[0];
+        if (note && about) { pushNote(about, note); hit = true; }
       }
       any = any || hit;
     });
-    proceedToReview(any);
+    return any;
+  }
+  function parseMods(text) { proceedToReview(applyTypedMods(text)); }
+
+  // Safety net for AI notes: a preset the customer didn't actually ask for (wrong thing or opposite
+  // direction, e.g. "no spicy" → "no pickles") is rejected, and the text is re-read locally instead.
+  function aiNotesTrusted(notes, text) {
+    const t = text.toLowerCase();
+    return notes.every(n => {
+      const item = BY_ID[n.id]; if (!item) return false;
+      const preset = MODS[item.mod].find(([lab]) => lab.toLowerCase() === n.note.toLowerCase());
+      if (!preset) return true;                        // free-text note in the customer's words
+      return matchMod(item, t) === preset[0] || t.split(/,|;|\band\b|&/).some(cl => matchMod(item, cl.trim()) === preset[0]);
+    });
   }
 
   async function proceedToReview(changed) {
@@ -697,7 +734,7 @@
     if (aiOff) return null;
     const t = token, prev = lastSide;
     busy = true; showTyping(true);
-    const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 7000);
+    const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 9000); // server retries once within ~8 s
     try {
       const r = await fetch('api/understand', {
         method: 'POST', signal: ctrl.signal, headers: { 'content-type': 'application/json' },
@@ -721,9 +758,14 @@
   }
 
   // Maps the AI's intent onto the same flows the buttons use. Returns false to fall back.
-  function handleAI(a) {
+  function handleAI(a, text) {
     const items = a.items || [], notes = a.notes || [];
-    const applyNotes = () => notes.forEach(n => { const l = line(n.id) || S.cart[0]; if (l) pushNote(l, n.note); });
+    const trusted = aiNotesTrusted(notes, text);
+    const applyNotes = ids => {
+      if (!notes.length) return false;
+      if (trusted) { notes.forEach(n => { const l = line(n.id) || S.cart[0]; if (l) pushNote(l, n.note); }); return true; }
+      return applyTypedMods(text, ids);
+    };
     switch (a.intent) {
       case 'quantity':
         if (!S.pending || !a.quantity) return false;
@@ -732,10 +774,11 @@
         if (!items.length) return false;
         // one dish named without a quantity → ask "How many?" like the button flow
         if (a.intent === 'add_items' && items.length === 1 && !items[0].qty) {
-          S.pendingNotes = notes; askQty(BY_ID[items[0].id]); return true;
+          S.pendingNotes = trusted ? notes : null; S.pendingText = !trusted && notes.length ? text : null;
+          askQty(BY_ID[items[0].id]); return true;
         }
         items.forEach(i => addToCart(i.id, i.qty || 1, a.intent === 'set_items' && !!line(i.id)));
-        applyNotes(); S.pending = null; S.awaiting = null;
+        applyNotes(items.map(i => i.id)); S.pending = null; S.awaiting = null;
         afterCartChange(); return true;
       case 'remove_items':
         if (!items.length) return false;
@@ -745,7 +788,7 @@
         S.checkout ? review('Removed ✅') : cartSummary("Removed ✅ Here's your order now 🧾"); return true;
       case 'customize':
         if (!S.cart.length || !notes.length) return false;
-        applyNotes();
+        if (!applyNotes()) return false;
         if (S.awaiting === 'customize') proceedToReview(true);
         else if (S.checkout) review('Noted 👍');
         else cartSummary("Noted 👍 Here's your order 🧾");
@@ -808,7 +851,7 @@
     if (/^(hi+|hello+|hey+|hai|salam|salaam|assalamu alaikum)[\s!.]*$/i.test(text)) return localUnderstand(text);
     const ai = await aiUnderstand(text);
     if (ai === ABORTED) return;
-    if (ai && handleAI(ai)) return;
+    if (ai && handleAI(ai, text)) return;
     localUnderstand(text);
   }
 
@@ -821,7 +864,8 @@
       if (n && n > 0 && findItems(t).length === 0) return setQty(Math.min(n, 50));
     }
     if (S.awaiting === 'customize') {
-      if (/^(no( changes?)?|nope|nothing|none|all good|no thanks|its fine|it'?s fine|fine|ok|okay)\b/.test(t)) return applyMods([]);
+      // only a whole-message "no" means no changes: "no spicy" / "no pickles" are changes
+      if (/^(no|nope|no changes?|no change needed|nothing|nothing else|none|all good|no thanks|no thank you|its fine|it'?s fine|fine|ok|okay|that'?s fine|as it is|keep it)[\s!.]*$/.test(t)) return applyMods([]);
       if (!/\b(remove|delete|cancel)\b/.test(t) && !(findItems(t).length && /\d/.test(t))) return parseMods(text);
     }
 
